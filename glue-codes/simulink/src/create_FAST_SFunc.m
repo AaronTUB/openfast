@@ -15,59 +15,40 @@
 
 mexname = 'FAST_SFunc'; % base name of the resulting mex file
 
-built_with_visualStudio = true; %if the libraries were built with cmake, set to false
 
-
-if (ispc && built_with_visualStudio)   
-%% defaults for visual studio builds:
-
-    libDir = '../../../build/bin';
-    includeDir = '../../../modules/openfast-library/src';  % needed for visual studio builds to find "FAST_Library.h"
-    outDir = libDir;
-        
-    switch computer('arch')
-        case 'win64'
-            % this is set up for files generated using the x64 configuration of vs-build
-            libName = 'OpenFAST-Simulink_x64';
-
-        case 'win32' 
-            % this is set up for files generated using the x86
-            % configuration of vs-build (win32 will work only on older versions of Matlab)
-            libName = 'OpenFAST-Simulink_Win32';
-    end
-    
-else    
-%% defaults for cmake builds:
-
-    if ( ismac )  % Apple MacOS
-        installDir = '../../../install';
-        outDir = fullfile(installDir, 'lib');
-    elseif ( ispc ) % Windows PC
-        installDir = '../../../install';
-        outDir = fullfile(installDir, 'lib');
-        % If there are shared libraries does it work for outDir to be the local directory?
-    else
-        installDir = '../../../install';
-        outDir = fullfile(installDir, 'lib');
-    end
-
-    libDir = fullfile(installDir, 'lib');
-    includeDir = fullfile(installDir, 'include');
-    libName = 'openfastlib';
+if ( ismac )  % Apple MacOS
+    installDir = '../../../install';
+    outDir = fullfile(installDir, 'lib');
+elseif ( ispc ) % Windows PC
+    installDir = '../../../install';
+    outDir = fullfile(installDir, 'lib');
+    % If there are shared libraries does it work for outDir to be the local directory?
+else
+    installDir = '../../../install';
+    outDir = '.';
 end
+
+libDir = fullfile(installDir, 'lib');
+includeDir = fullfile(installDir, 'include');
+libName = 'openfastlib';
 
 %% BUILD COMMAND
 fprintf( '\n----------------------------\n' );
 fprintf( 'Creating %s\n\n', [outDir filesep mexname '.' mexext] );
 
 mex('-largeArrayDims', ...
-    ... % '-v', ... %add this line for "verbose" output (for debugging)
-    ['-L' libDir], ...
-    ['-l' libName], ...
-    ['-I' includeDir], ...
-    '-I../../../modules/supercontroller/src', ... % needed for visual studio builds to find "SuperController_Types.h"
-    '-I../../../modules/openfoam/src',        ... % needed for visual studio builds to find "OpenFOAM_Types.h"
+    '-v', ... %add this line for "verbose" output (for debugging)
+    ['-L', libDir], ...
+    ['-l', libName], ...
+    '-lgfortran', ...
+    '-lquadmath', ...
+    '-llapack', ...
+    '-lblas', ...
+    '-ldl', ...
+    ['-I', includeDir], ...
     '-outdir', outDir, ...
-    ['COMPFLAGS=$COMPFLAGS -MT -DS_FUNCTION_NAME=' mexname], ...
+    ['CFLAGS=$CFLAGS -DS_FUNCTION_NAME=' mexname], ...
+    ... ['CXXFLAGS=$CXXFLAGS -DS_FUNCTION_NAME=' mexname], ...
     '-output', mexname, ...
     'FAST_SFunc.c');
+

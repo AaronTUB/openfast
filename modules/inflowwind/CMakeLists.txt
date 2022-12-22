@@ -48,7 +48,10 @@ set(IFW_SOURCES
   src/Lidar_Types.f90
 )
 
-add_library(ifwlib ${IFW_SOURCES})
+add_library(ifwlib_obj OBJECT ${IFW_SOURCES})
+target_link_libraries(ifwlib_obj nwtclibs_obj)
+
+add_library(ifwlib $<TARGET_OBJECTS:ifwlib_obj>)
 target_link_libraries(ifwlib nwtclibs)
 
 # C-bound interface library
@@ -67,7 +70,7 @@ set(IFW_DRIVER_SOURCES
 add_executable(inflowwind_driver ${IFW_DRIVER_SOURCES})
 target_link_libraries(inflowwind_driver ifwlib versioninfolib ${CMAKE_DL_LIBS})
 
-install(TARGETS inflowwind_driver ifwlib ifw_c_binding
+install(TARGETS inflowwind_driver ifwlib ifw_c_binding ifwlib_obj
   EXPORT "${CMAKE_PROJECT_NAME}Libraries"
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
